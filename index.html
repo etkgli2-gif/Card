@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+
+    <script>
+        // =================================================================
+        // 👑 廣一辛管理員專區 (每天放學只要改這裡就好了！)
+        // =================================================================
+        
+        // 📢 1. 跑馬燈公告 (引號裡面的字可以隨便改)
+        const 跑馬燈文字 = "廣設一辛公告：進出教室請記得隨手關門，這樣冷氣才不會跑出去喔！";
+
+        // 💰 2. 每日冷氣卡餘額 (格式：日期 空格 餘額) (遇到假日不用打)
+        const 每日紀錄表 = `
+        
+        5/11 800
+        
+        `;
+
+        // 🔋 3. 設定血條滿格是多少錢
+        const 血條滿格金額 = 1000;
+        
+        // =================================================================
+        // ⬇️⬇️⬇️ 下面的所有程式碼都是自動化機器人，絕對不要動！ ⬇️⬇️⬇️
+        // =================================================================
+    </script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>斗家廣一辛 | 冷氣卡餘額監控</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        :root { --primary-color: #1e88e5; --bg-color: #f0f4f8; --bar-color: #4ade80; }
+        body.low-balance { --primary-color: #e63946; --bg-color: #fff1f2; --bar-color: #f87171; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; transition: 0.3s; }
+        .container { max-width: 500px; width: 100%; }
+        
+        .header { background: var(--primary-color); color: white; border-radius: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: 0.3s; padding-bottom: 25px; overflow: hidden; }
+        
+        .marquee-container { width: 100%; background-color: rgba(0, 0, 0, 0.15); overflow: hidden; white-space: nowrap; padding: 8px 0; margin-bottom: 15px; }
+        .marquee-text { display: inline-block; padding-left: 100%; animation: marquee-scroll 12s linear infinite; font-size: 14px; font-weight: bold; letter-spacing: 1px; }
+        @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
+        .current-balance { font-size: 56px; font-weight: 700; margin: 5px 0; }
+        .hp-bar-container { width: 80%; height: 12px; background: rgba(255,255,255,0.3); border-radius: 10px; margin: 15px auto; overflow: hidden; border: 1.5px solid rgba(255,255,255,0.5); }
+        .hp-bar-fill { height: 100%; width: 0%; background-color: var(--bar-color); border-radius: 10px; transition: width 1s ease-in-out, background-color 0.3s; }
+
+        .warning-box { display: none; background: white; color: #e63946; padding: 8px 15px; border-radius: 10px; margin: 10px auto 10px auto; max-width: 280px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); animation: pulse 1s infinite alternate; }
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.05); } }
+
+        table { width: 100%; background: white; border-collapse: collapse; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        th { background: #f8fafc; color: #64748b; padding: 15px; font-size: 14px; border-bottom: 2px solid #f1f5f9; }
+        td { padding: 15px; text-align: center; border-bottom: 1px solid #eee; color: #444; }
+        .date-col { font-weight: bold; color: #666; }
+        .cost-highlight { color: #e53935; font-weight: bold; } 
+        .recharge-badge { background: #43a047; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; margin-bottom: 3px; }
+        .estimated-badge { background: #f59e0b; color: white; padding: 2px 6px; border-radius: 6px; font-size: 12px; margin-right: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="marquee-container"><div id="marquee-content" class="marquee-text">讀取中...</div></div>
+        <div style="font-size: 15px; letter-spacing: 1px; opacity: 0.9;">❄️ 斗家廣一辛 冷氣卡餘額</div>
+        <div class="current-balance" id="latest-balance">0 <span style="font-size: 20px;">元</span></div>
+        <div class="hp-bar-container"><div id="hp-fill" class="hp-bar-fill"></div></div>
+        <div id="warning-msg" class="warning-box">⚠️ 近期將收取冷氣費用，感謝配合。</div>
+        <div style="font-size: 12px; opacity: 0.8;">最後更新：<span id="update-time">-</span></div>
+    </div>
+    <table>
+        <thead><tr><th>日期</th><th>剩餘金額</th><th>今日動態</th></tr></thead>
+        <tbody id="record-table"></tbody>
+    </table>
+</div>
+
+<script>
+    // --- 這裡負責幫你畫圖跟算數學，都不用管它 ---
+    document.getElementById('marquee-content').innerText = 跑馬燈文字;
+    const tbody = document.getElementById('record-table');
+    const lines = 每日紀錄表.trim().split('\n');
+    const myData = [];
+    const balances = [];
+
+    lines.forEach(line => {
+        if (!line.trim()) return; 
+        const parts = line.trim().split(/\s+/); 
+        if (parts.length >= 2) {
+            const dateStr = parts[0];
+            const moneyStr = parts[1];
+            const isUnknown = (moneyStr === '?' || moneyStr === '？' || moneyStr === '');
+            const moneyVal = isUnknown ? null : parseInt(moneyStr);
+            let rechargeVal = 0;
+            if (parts.length >= 3 && parts[2].includes('+')) {
+                rechargeVal = parseInt(parts[2].replace('+', ''));
+            }
+            myData.push({ date: dateStr, isEstimated: false, recharge: rechargeVal });
+            balances.push(moneyVal);
+        }
+    });
+
+    for (let i = 0; i < balances.length; i++) {
+        if (balances[i] === null) {
+            let prevIdx = -1, nextIdx = -1;
+            for (let j = i - 1; j >= 0; j--) { if (balances[j] !== null) { prevIdx = j; break; } }
+            for (let j = i + 1; j < balances.length; j++) { if (balances[j] !== null) { nextIdx = j; break; } }
+            if (prevIdx !== -1 && nextIdx !== -1) {
+                let costPerRow = (balances[nextIdx] - balances[prevIdx]) / (nextIdx - prevIdx);
+                balances[i] = Math.round(balances[nextIdx] - (costPerRow * (nextIdx - i)));
+                myData[i].isEstimated = true;
+            } else { balances[i] = 0; }
+        }
+    }
+
+    myData.forEach((data, i) => {
+        const tr = document.createElement('tr');
+        const displayBalance = data.isEstimated ? `<span class="estimated-badge">預估</span> ${balances[i]}` : balances[i];
+        let costHtml = '-', costClass = 'cost';
+        if (i < balances.length - 1) {
+            const currentBal = balances[i];
+            const prevBal = balances[i+1];
+            const actualCost = currentBal - (prevBal + data.recharge);
+            if (data.recharge > 0) {
+                costHtml = `<span class="recharge-badge">💰 儲值 +${data.recharge}</span><br><span class="cost-highlight" style="font-size:12px;">${actualCost} 元</span>`;
+            } else {
+                if (actualCost < 0) { costHtml = actualCost + ' 元'; costClass = 'cost cost-highlight'; }
+                else if (actualCost > 0) { costHtml = `<span class="recharge-badge">💰 儲值 +${actualCost}</span>`; }
+                else { costHtml = '0 元'; }
+            }
+        }
+        tr.innerHTML = `<td class="date-col">${data.date}</td><td>${displayBalance}</td><td class="${costClass}">${costHtml}</td>`;
+        tbody.appendChild(tr);
+    });
+
+    if (balances.length > 0) {
+        const currentBal = balances[0];
+        document.getElementById('latest-balance').innerHTML = `${currentBal} <span style="font-size: 20px;">元</span>`;
+        document.getElementById('update-time').innerText = myData[0].date;
+
+        let percentage = (currentBal / 血條滿格金額) * 100;
+        if (percentage > 100) percentage = 100;
+        if (percentage < 0) percentage = 0;
+        
+        const hpFill = document.getElementById('hp-fill');
+        setTimeout(() => { hpFill.style.width = percentage + '%'; }, 300);
+
+        if (currentBal < 100) {
+            document.body.classList.add('low-balance'); 
+            document.getElementById('warning-msg').style.display = 'block';
+        } else if (percentage < 50) {
+            document.documentElement.style.setProperty('--bar-color', '#fbbf24');
+        }
+    }
+</script>
+
+</body>
+</html>
