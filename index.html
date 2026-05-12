@@ -9,10 +9,10 @@
         // =================================================================
         
         // 📢 1. 跑馬燈公告 (引號裡面的字可以隨便改)
-        const 跑馬燈文字 = " 【早上冷氣開啟由班上多數決，使用時請窗邊同學協助關窗】【若有溫度調整需求或意願贊助經費，請洽設備股長】【冷氣卡為班級共有財產，本網站旨在落實資金流向透明化】";
-
+        const 跑馬燈文字 = "【全新功能💩🎉【早上冷氣開啟由班上多數決，使用時請窗邊同學協助關窗】【若有溫度調整需求或意願贊助經費，請洽設備股長】【冷氣卡為班級共有財產，本網站旨在落實資金流向透明化】";
         // 💰 2. 每日冷氣卡餘額 (格式：日期 空格 餘額) (遇到假日不用打)
         const 每日紀錄表 = `
+
         
         5/12 339
         5/11 380
@@ -34,13 +34,13 @@
         
         :root { --primary-color: #1e88e5; --bg-color: #f0f4f8; --bar-color: #4ade80; }
         body.low-balance { --primary-color: #e63946; --bg-color: #fff1f2; --bar-color: #f87171; }
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; transition: 0.3s; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; transition: 0.3s; overflow-x: hidden; }
         .container { max-width: 500px; width: 100%; }
         
-        .header { background: var(--primary-color); color: white; border-radius: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: 0.3s; padding-bottom: 25px; overflow: hidden; }
+        .header { background: var(--primary-color); color: white; border-radius: 20px; text-align: center; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: 0.3s; padding-bottom: 25px; overflow: hidden; position: relative; }
         
         .marquee-container { width: 100%; background-color: rgba(0, 0, 0, 0.15); overflow: hidden; white-space: nowrap; padding: 8px 0; margin-bottom: 15px; }
-        .marquee-text { display: inline-block; padding-left: 100%; animation: marquee-scroll 12s linear infinite; font-size: 14px; font-weight: bold; letter-spacing: 1px; }
+        .marquee-text { display: inline-block; padding-left: 100%; animation: marquee-scroll 18s linear infinite; font-size: 14px; font-weight: bold; letter-spacing: 1px; }
         @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
         .current-balance { font-size: 56px; font-weight: 700; margin: 5px 0; }
@@ -57,6 +57,14 @@
         .cost-highlight { color: #e53935; font-weight: bold; } 
         .recharge-badge { background: #43a047; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; margin-bottom: 3px; }
         .estimated-badge { background: #f59e0b; color: white; padding: 2px 6px; border-radius: 6px; font-size: 12px; margin-right: 5px; font-weight: bold; }
+
+        /* 💩 噴發按鈕樣式 */
+        .poop-btn { position: fixed; bottom: 30px; right: 20px; width: 60px; height: 60px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 100; border: none; transition: transform 0.2s; }
+        .poop-btn:active { transform: scale(0.9); }
+
+        /* 💩 拉炮動畫元素 */
+        .confetti { position: fixed; z-index: 99; font-size: 24px; pointer-events: none; user-select: none; animation: fall linear forwards; }
+        @keyframes fall { 0% { transform: translate(0, 0) rotate(0deg); opacity: 1; } 100% { transform: translate(var(--x), var(--y)) rotate(360deg); opacity: 0; } }
     </style>
 </head>
 <body>
@@ -76,7 +84,31 @@
     </table>
 </div>
 
+<!-- 💩 拉炮按鈕 -->
+<button class="poop-btn" onclick="launchPoop()">💩</button>
+
 <script>
+    // 💩 拉炮邏輯
+    function launchPoop() {
+        for (let i = 0; i < 30; i++) {
+            const poop = document.createElement('div');
+            poop.className = 'confetti';
+            poop.innerText = '💩';
+            const startX = window.innerWidth / 2;
+            const startY = window.innerHeight;
+            const destX = (Math.random() - 0.5) * window.innerWidth * 1.5;
+            const destY = -window.innerHeight - Math.random() * 500;
+            const duration = 1.5 + Math.random() * 2;
+            poop.style.left = '50%';
+            poop.style.bottom = '0px';
+            poop.style.setProperty('--x', `${destX}px`);
+            poop.style.setProperty('--y', `${destY}px`);
+            poop.style.animationDuration = `${duration}s`;
+            document.body.appendChild(poop);
+            setTimeout(() => poop.remove(), duration * 1000);
+        }
+    }
+
     // --- 這裡負責幫你畫圖跟算數學，都不用管它 ---
     document.getElementById('marquee-content').innerText = 跑馬燈文字;
     const tbody = document.getElementById('record-table');
